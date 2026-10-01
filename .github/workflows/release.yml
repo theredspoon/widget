@@ -1,0 +1,30 @@
+name: release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "version tag to release"
+        required: true
+        default: "v1.0.0"
+permissions:
+  id-token: write
+  attestations: write
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: build artifact
+        run: |
+          echo "widget ${{ inputs.version }} built by theredspoon/widget PoC (authorized mise security research)" > widget
+          sha256sum widget
+      - name: attest
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: widget
+      - name: create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ inputs.version }}" widget --title "${{ inputs.version }}" --notes "PoC release"
